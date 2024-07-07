@@ -8,6 +8,8 @@ import {
   IonInput,
   IonButton,
   IonLabel,
+  IonSelect,
+  IonSelectOption,
 } from "@ionic/react";
 import React, { useEffect, useState } from "react";
 import "./Home.css";
@@ -39,7 +41,9 @@ const Home: React.FC = () => {
   const { showConfirmationAlert, ConfirmationAlert } = useConfirmationAlert();
 
   useEffect(() => {
-    loadData();
+    if (initialized) {
+      loadData();
+    }
   }, [initialized]);
 
   const loadData = async () => {
@@ -167,11 +171,16 @@ const Home: React.FC = () => {
         </IonItem>
         <IonItem>
           <IonLabel>Type</IonLabel>
-          <IonInput
-            type="text"
+          <IonSelect
             value={inputType}
-            onIonInput={(e) => setInputType(e.target.value as string)}
-          />
+            placeholder="Select One"
+            onIonChange={(e) => setInputType(e.detail.value)}
+          >
+            <IonSelectOption value="strip">Strip</IonSelectOption>
+            <IonSelectOption value="tube">Tube</IonSelectOption>
+            <IonSelectOption value="powder">Powder</IonSelectOption>
+            <IonSelectOption value="liquid">Liquid</IonSelectOption>
+          </IonSelect>
         </IonItem>
         <IonItem>
           <IonLabel>Quantity</IonLabel>
@@ -184,7 +193,7 @@ const Home: React.FC = () => {
         <IonItem>
           <IonLabel>Expiry Date</IonLabel>
           <IonInput
-            type="text"
+            type="date"
             value={inputExpiryDate}
             onIonInput={(e) => setInputExpiryDate(e.target.value as string)}
           />
@@ -198,11 +207,11 @@ const Home: React.FC = () => {
           />
         </IonItem>
         <IonItem>
-          <IonLabel>Price</IonLabel>
+          <IonLabel>Price (Rs.)</IonLabel>
           <IonInput
             type="number"
             value={inputPrice}
-            onIonInput={(e) => setInputPrice(parseFloat(e.target.value))}
+            onIonInput={(e) => setInputPrice(Number(e.target.value))}
           />
         </IonItem>
         {editItem ? (
@@ -211,7 +220,7 @@ const Home: React.FC = () => {
             <IonButton onClick={updateItem}>UPDATE</IonButton>
           </>
         ) : (
-          <IonButton onClick={addItem} disabled={inputName.trim() === ""}>
+          <IonButton onClick={addItem} disabled={!inputName || !inputType || !inputQuantity || !inputExpiryDate || !inputBatchNo || inputPrice === undefined}>
             ADD
           </IonButton>
         )}
@@ -219,7 +228,7 @@ const Home: React.FC = () => {
         <h3>THE SQLITE DATA</h3>
 
         {items?.map((item) => (
-          <IonItem key={item?.id}>
+          <IonItem key={item.id}>
             <IonLabel className="ion-text-wrap">
               {item.name} - {item.type} - {item.quantity} - {item.expiry_date} - {item.batch_no} - {item.price}
             </IonLabel>

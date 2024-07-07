@@ -30,12 +30,12 @@ const useSQLiteDB = () => {
           false
         );
       }
+
+      await initializeTables();
+      setInitialized(true);
     };
 
-    initializeDB().then(() => {
-      initializeTables();
-      setInitialized(true);
-    });
+    initializeDB();
   }, []);
 
   const performSQLAction = async (
@@ -55,10 +55,6 @@ const useSQLiteDB = () => {
     }
   };
 
-  /**
-   * here is where you cna check and update table
-   * structure
-   */
   const initializeTables = async () => {
     performSQLAction(async (db: SQLiteDBConnection | undefined) => {
       const queryCreateTable = `
@@ -73,7 +69,7 @@ const useSQLiteDB = () => {
       );
     `;
       const respCT = await db?.execute(queryCreateTable);
-      console.log(`res: ${JSON.stringify(respCT)}`);
+      console.log(`Table creation result: ${JSON.stringify(respCT)}`);
     });
   };
 
