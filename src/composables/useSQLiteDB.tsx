@@ -57,19 +57,31 @@ const useSQLiteDB = () => {
 
   const initializeTables = async () => {
     performSQLAction(async (db: SQLiteDBConnection | undefined) => {
-      const queryCreateTable = `
-      CREATE TABLE IF NOT EXISTS medicines (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        type TEXT,
-        quantity TEXT,
-        expiry_date TEXT,
-        batch_no TEXT,
-        price REAL
-      );
-    `;
-      const respCT = await db?.execute(queryCreateTable);
-      console.log(`Table creation result: ${JSON.stringify(respCT)}`);
+      const queryCreateMedicinesTable = `
+        CREATE TABLE IF NOT EXISTS medicines (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          type TEXT,
+          quantity TEXT,
+          expiry_date TEXT,
+          batch_no TEXT,
+          price REAL
+        );
+      `;
+
+      const queryCreateGeneralItemsTable = `
+        CREATE TABLE IF NOT EXISTS general_items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          quantity TEXT,
+          price REAL
+        );
+      `;
+
+      await db?.execute(queryCreateMedicinesTable);
+      await db?.execute(queryCreateGeneralItemsTable);
+
+      console.log("Tables created successfully.");
     });
   };
 
