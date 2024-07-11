@@ -16,8 +16,7 @@ const useSQLiteDB = () => {
 
       sqlite.current = new SQLiteConnection(CapacitorSQLite);
       const ret = await sqlite.current.checkConnectionsConsistency();
-      const isConn = (await sqlite.current.isConnection("db_vite", false))
-        .result;
+      const isConn = (await sqlite.current.isConnection("db_vite", false)).result;
 
       if (ret.result && isConn) {
         db.current = await sqlite.current.retrieveConnection("db_vite", false);
@@ -46,7 +45,11 @@ const useSQLiteDB = () => {
       await db.current?.open();
       await action(db.current);
     } catch (error) {
-      alert((error as Error).message);
+      if ((error as Error).message.includes("UNIQUE constraint failed")) {
+        alert("A medicine with this name already exists. Please use a different name.");
+      } else {
+        alert((error as Error).message);
+      }
     } finally {
       try {
         (await db.current?.isDBOpen())?.result && (await db.current?.close());
@@ -60,7 +63,7 @@ const useSQLiteDB = () => {
       const queryCreateMedicinesTable = `
         CREATE TABLE IF NOT EXISTS medicines (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT,
+          name TEXT UNIQUE,
           type TEXT,
           quantity TEXT,
           expiry_date TEXT,

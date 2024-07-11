@@ -34,6 +34,8 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import ViewMedicines from './pages/ViewMedicines';
+import Search from './pages/Search';
 
 setupIonicReact();
 
@@ -47,6 +49,8 @@ const App: React.FC = () => (
         <Route exact path="/add/medicines"> {/* Define route for Medicines */}
           <Medicines />
         </Route>
+        <Route path="/view-medicines" component={ViewMedicines} exact />
+        <Route path="/search" component={Search} exact />
         <Route exact path="/add/general-items"> {/* Define route for General Items */}
           <GeneralItems />
         </Route>
