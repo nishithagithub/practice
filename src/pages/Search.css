@@ -1,0 +1,16 @@
+.listcls{
+    height: 10%;
+    color: black;
+}
+.form-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 10px;
+    border: 2px solid greenyellow;
+    
+    /* background-color: brown; */
+  }
+  .itemcls{
+    
+  }
+  

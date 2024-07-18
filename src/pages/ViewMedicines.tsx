@@ -8,6 +8,11 @@ import {
     IonButton,
     IonLabel,
     IonInput,
+    IonCol,
+    IonRow,
+    IonGrid,
+    IonFooter,
+    IonText,
   } from "@ionic/react";
   import React, { useEffect, useState } from "react";
   import { SQLiteDBConnection } from "@capacitor-community/sqlite";
@@ -131,105 +136,104 @@ import {
   
     return (
       <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle>View Medicines</IonTitle>
-          </IonToolbar>
-        </IonHeader>
+        <IonHeader className='headercls'>
+        Data Table
+      </IonHeader>
         <IonContent fullscreen className="ion-padding">
-          <h3>Medicines Data</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>S No</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Quantity</th>
-                <th>Expiry Date</th>
-                <th>Batch No</th>
-                <th>Price</th>
-                <th>Edit</th>
-                <th>Delete</th>
-              </tr>
-            </thead>
-            <tbody>
+        <IonGrid>
+              <IonRow className='titles'>
+                <IonCol className='tablecol'>S.No</IonCol>
+                <IonCol className='tablecol'>Name</IonCol>
+                <IonCol className='tablecol'>Type</IonCol>
+                <IonCol className='tablecol'>Quantity</IonCol>
+                <IonCol className='tablecol'>Expiry Date</IonCol>
+                <IonCol className='tablecol'>Batch No</IonCol>
+                <IonCol className='tablecol'>Price</IonCol>
+                <IonCol className='tablecol'>Edit</IonCol>
+                <IonCol className='tablecol'>Delete</IonCol>
+              </IonRow>
               {items?.map((item, index) => (
-                <tr key={item.id}>
-                  <td>{index + 1}</td>
-                  <td>{item.name}</td>
-                  <td>{item.type}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.expiry_date}</td>
-                  <td>{item.batch_no}</td>
-                  <td>{item.price}</td>
-                  <td>
-                    <IonButton onClick={() => doEditItem(item)}>EDIT</IonButton>
-                  </td>
-                  <td>
-                    <IonButton onClick={() => confirmDelete(item.id)}>DELETE</IonButton>
-                  </td>
-                </tr>
+                <IonRow key={item.id}>
+                  <IonCol className='tablecol'>{index+1}</IonCol>
+                  <IonCol className='tablecol'>{item.name}</IonCol>
+                  <IonCol className='tablecol'>{item.type}</IonCol>
+                  <IonCol className='tablecol'>{item.quantity}</IonCol>
+                  <IonCol className='tablecol'>{item.expiry_date}</IonCol>
+                  <IonCol className='tablecol'>{item.batch_no}</IonCol>
+                  <IonCol className='tablecol'>{item.price}</IonCol>
+                  <IonCol className='tablecol'>
+                    <IonButton color="light" onClick={() => doEditItem(item)}>EDIT</IonButton>
+                    </IonCol>
+                    <IonCol className='tablecol'>
+                  <IonButton color="light" onClick={() => confirmDelete(item.id)}>DELETE</IonButton>
+                  </IonCol>
+                  
+                </IonRow>
               ))}
-            </tbody>
-          </table>
+            </IonGrid>
+          
   
           {editItem && (
             <>
-              <IonItem>
-                <IonLabel>Name</IonLabel>
+              <IonItem className="itemcls">
+                <IonLabel className="labelcls">Name</IonLabel>
                 <IonInput
                   type="text"
                   value={inputName}
                   onIonInput={(e) => setInputName(e.target.value as string)}
                 />
               </IonItem>
-              <IonItem>
-                <IonLabel>Type</IonLabel>
+              <IonItem className="itemcls">
+                <IonLabel className="labelcls">Type</IonLabel>
                 <IonInput
                   type="text"
                   value={inputType}
                   onIonInput={(e) => setInputType(e.target.value as string)}
                 />
               </IonItem>
-              <IonItem>
-                <IonLabel>Quantity</IonLabel>
+              <IonItem className="itemcls">
+                <IonLabel className="labelcls">Quantity</IonLabel>
                 <IonInput
                   type="text"
                   value={inputQuantity}
                   onIonInput={(e) => setInputQuantity(e.target.value as string)}
                 />
               </IonItem>
-              <IonItem>
-                <IonLabel>Expiry Date</IonLabel>
+              <IonItem className="itemcls">
+                <IonLabel className="labelcls">Expiry Date</IonLabel>
                 <IonInput
                   type="date"
                   value={inputExpiryDate}
                   onIonInput={(e) => setInputExpiryDate(e.target.value as string)}
                 />
               </IonItem>
-              <IonItem>
-                <IonLabel>Batch No</IonLabel>
+              <IonItem className="itemcls">
+                <IonLabel className="labelcls">Batch No</IonLabel>
                 <IonInput
                   type="text"
                   value={inputBatchNo}
                   onIonInput={(e) => setInputBatchNo(e.target.value as string)}
                 />
               </IonItem>
-              <IonItem>
-                <IonLabel>Price (Rs.)</IonLabel>
+              <IonItem className="itemcls">
+                <IonLabel className="labelcls">Price (Rs.)</IonLabel>
                 <IonInput
                   type="number"
                   value={inputPrice}
                   onIonInput={(e) => setInputPrice(Number(e.target.value))}
                 />
               </IonItem>
-              <IonButton onClick={() => doEditItem(undefined)}>CANCEL</IonButton>
-              <IonButton onClick={updateItem}>UPDATE</IonButton>
+              <IonButton color="light" onClick={() => doEditItem(undefined)}>CANCEL</IonButton>
+              <IonButton color="light" onClick={updateItem}>UPDATE</IonButton>
             </>
           )}
   
           {ConfirmationAlert}
         </IonContent>
+        <IonFooter className='footer'>
+        <IonText>Contact Us : 9010203040</IonText>
+        <IonText>Email : abc@gmail.com</IonText>
+      </IonFooter>
       </IonPage>
     );
   };

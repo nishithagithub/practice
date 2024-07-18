@@ -10,7 +10,6 @@ import {
   IonInput,
   IonSelect,
   IonSelectOption,
-  IonList,
   IonToast,
 } from "@ionic/react";
 import React, { useState, useEffect } from "react";
@@ -18,6 +17,7 @@ import useSQLiteDB from "../composables/useSQLiteDB";
 
 const Search: React.FC = () => {
   const [searchType, setSearchType] = useState<"medicines" | "general_items">("medicines");
+  const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [showToast, setShowToast] = useState(false);
@@ -33,6 +33,20 @@ const Search: React.FC = () => {
     await performSQLAction(async (db) => {
       const query = `SELECT * FROM ${searchType}`;
       const results = await db?.query(query);
+      setSearchResults(results?.values ?? []);
+    });
+  };
+
+  const searchItems = async () => {
+    if (!searchText.trim()) {
+      setToastMessage("Please enter a search term.");
+      setShowToast(true);
+      return;
+    }
+
+    await performSQLAction(async (db) => {
+      const query = `SELECT * FROM ${searchType} WHERE name LIKE ?`;
+      const results = await db?.query(query, [`%${searchText}%`]);
       setSearchResults(results?.values ?? []);
     });
   };
@@ -60,43 +74,57 @@ const Search: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Search Items</IonTitle>
-        </IonToolbar>
+      <IonHeader className="headercls">
+        Search
       </IonHeader>
       <IonContent fullscreen className="ion-padding">
-        <IonItem>
-          <IonLabel>Type</IonLabel>
+        <IonItem className="itemcls">
+          <IonLabel className="labelcls">Type</IonLabel>
           <IonSelect
             value={searchType}
-            onIonChange={(e) => setSearchType(e.detail.value)}
+            onIonChange={(e) => setSearchType(e.detail.value as "medicines" | "general_items")}
           >
             <IonSelectOption value="medicines">Medicines</IonSelectOption>
             <IonSelectOption value="general_items">General Items</IonSelectOption>
           </IonSelect>
         </IonItem>
-        <IonList>
+        <div className="form-container">
+        <IonItem className="itemcls">
+          <IonInput
+            type="text"
+            placeholder="Search by name"
+            value={searchText}
+            onIonInput={(e) => setSearchText(e.detail.value as string)}
+          />
+          <IonButton color="light" onClick={searchItems}>Search</IonButton>
+        </IonItem>
+        </div>
+        <div className="listcls">
           {searchResults.map((item) => (
-            <IonItem key={item.id}>
-              <IonLabel>
-                <h2>{item.name}</h2>
-                <p>Expiry Date: {item.expiry_date}</p>
-                <p>Price: Rs. {item.price}</p>
-                <p>Quantity: {item.quantity}</p>
-              </IonLabel>
-              <IonInput
-                type="number"
-                placeholder="Quantity"
-                onIonInput={(e) => {
-                  const quantity = parseInt((e.target as HTMLInputElement).value);
+            <div key={item.id} className="itemcls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p><strong>Name:</strong>{item.name}</p>
+                <p><strong>Type:</strong> {searchType}</p>
+                <p><strong>Quantity:</strong> {item.quantity}</p>
+                <p><strong>Expiry Date:</strong> {item.expiry_date}</p>
+                <p><strong>Batch No:</strong> {item.batch_no}</p>
+                <p><strong>Price:</strong> Rs. {item.price}</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <IonInput
+                  type="number"
+                  placeholder="Quantity"
+                  id={`quantity-${item.id}`}
+                />
+                <IonButton color="light" onClick={() => {
+                  const inputElement = document.getElementById(`quantity-${item.id}`) as HTMLInputElement;
+                  const quantity = parseInt(inputElement.value);
                   addToCart(item, quantity);
-                }}
-              />
-              <IonButton onClick={() => addToCart(item, 1)}>+</IonButton>
-            </IonItem>
+                }}>Add to Cart</IonButton>
+              </div>
+            </div>
           ))}
-        </IonList>
+        </div>
         <IonToast
           isOpen={showToast}
           onDidDismiss={() => setShowToast(false)}
