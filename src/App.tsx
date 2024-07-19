@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Medicines from './pages/Medicines'; // Import Medicines component
 import GeneralItems from './pages/GeneralItems'; // Import GeneralItems component
 import Add from './pages/Add'; // Import Add component
+import AddToCart from './pages/AddToCart'; // Import AddToCart component
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -35,6 +36,7 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import './pages/AddToCart.css'; // Import AddToCart CSS
 import ViewMedicines from './pages/ViewMedicines';
 import Search from './pages/Search';
 
@@ -57,6 +59,9 @@ const App: React.FC = () => (
         <Route path="/search" component={Search} exact />
         <Route exact path="/add/general-items"> {/* Define route for General Items */}
           <GeneralItems />
+        </Route>
+        <Route exact path="/add-to-cart"> {/* Define route for AddToCart */}
+          <AddToCart />
         </Route>
         <Route exact path="/">
           <Redirect to="/home" /> {/* Change to redirect to /home */}

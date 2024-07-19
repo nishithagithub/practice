@@ -1,0 +1,91 @@
+.items-section {
+    /* margin-left: 16px; */
+    width: 100%;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.headercls {
+    color: black;
+    height: 13%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    background-color: pink;
+    font-size: xx-large;
+    box-shadow: 0px 10px 15px lightskyblue;
+    border: 3px solid lightskyblue;
+}
+
+.section-header {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.no-items {
+    text-align: center;
+    color: gray;
+    margin: 16px 0;
+}
+
+.header-row {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.5fr 1fr 0.5fr 1fr;
+    gap: 10px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 2px solid #000;
+}
+
+.header-cell {
+    font-weight: bold;
+    padding: 5px;
+}
+
+.item-row {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.5fr 1fr 0.5fr 1fr;
+    gap: 10px;
+    text-align: center;
+    align-items: center;
+    margin: 4px 0;
+}
+
+.item-cell {
+    padding: 5px;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 0;
+}
+
+.date-text {
+    flex: 10;
+    text-align: left;
+}
+
+.total-amount {
+    text-align: right;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.itemcls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.labelcls {
+    min-width: 150px; /* Adjust as needed */
+    text-align: left;
+    padding-right: 10px;
+}
+
+.inputcls {
+    flex: 1;
+}
