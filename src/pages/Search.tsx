@@ -10,8 +10,11 @@ import {
   IonSelectOption,
   IonToast,
   IonTitle,
+  IonList,
+  IonListHeader,
+  IonNote,
 } from "@ionic/react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import useSQLiteDB from "../composables/useSQLiteDB";
 
@@ -19,8 +22,10 @@ const Search: React.FC = () => {
   const [searchType, setSearchType] = useState<"medicines" | "general_items">("medicines");
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const inputRef = useRef<HTMLIonInputElement>(null);
 
   const { performSQLAction } = useSQLiteDB();
   const history = useHistory();
@@ -28,6 +33,25 @@ const Search: React.FC = () => {
   useEffect(() => {
     fetchAllItems();
   }, [searchType]);
+
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "Enter") {
+        searchItems();
+      }
+    };
+
+    const inputElement = inputRef.current?.getInputElement();
+    inputElement?.then(element => {
+      element?.addEventListener("keydown", handleKeyPress);
+    });
+
+    return () => {
+      inputElement?.then(element => {
+        element?.removeEventListener("keydown", handleKeyPress);
+      });
+    };
+  }, [searchText]); // Adding searchText as a dependency to use the latest value
 
   const fetchAllItems = async () => {
     await performSQLAction(async (db) => {
@@ -47,7 +71,29 @@ const Search: React.FC = () => {
     await performSQLAction(async (db) => {
       const query = `SELECT * FROM ${searchType} WHERE name LIKE ?`;
       const results = await db?.query(query, [`%${searchText}%`]);
-      setSearchResults(results?.values ?? []);
+      const items = results?.values ?? [];
+
+      if (items.length === 0) {
+        setToastMessage("No results found.");
+        setShowToast(true);
+      }
+
+      setSearchResults(items);
+      setSuggestions([]); // Clear suggestions after search
+    });
+  };
+
+  const fetchSuggestions = async (text: string) => {
+    if (!text.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
+    await performSQLAction(async (db) => {
+      const query = `SELECT name FROM ${searchType} WHERE name LIKE ? LIMIT 5`;
+      const results = await db?.query(query, [`${text}%`]);
+      const items = results?.values ?? [];
+      setSuggestions(items);
     });
   };
 
@@ -114,11 +160,32 @@ const Search: React.FC = () => {
               type="text"
               placeholder="Search by name"
               value={searchText}
-              onIonInput={(e) => setSearchText(e.detail.value as string)}
+              onIonInput={(e) => {
+                const value = e.detail.value as string;
+                setSearchText(value);
+                fetchSuggestions(value);
+              }}
+              ref={inputRef}
             />
             <IonButton color="light" onClick={searchItems}>Search</IonButton>
           </IonItem>
         </div>
+        {suggestions.length > 0 && (
+          <IonList>
+            <IonListHeader>
+              <IonLabel>Searching for...</IonLabel>
+            </IonListHeader>
+            {suggestions.map((suggestion, index) => (
+              <IonItem key={index} onClick={() => {
+                setSearchText(suggestion.name);
+                setSuggestions([]);
+                searchItems();
+              }}>
+                <IonLabel>{suggestion.name}</IonLabel>
+              </IonItem>
+            ))}
+          </IonList>
+        )}
         <div className="listcls">
           {searchResults.map((item) => (
             <div key={item.id} className="itemcls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
