@@ -63,3 +63,8 @@
  .tablecol{
     border: 2px solid black;
  }
+ .required {
+   color: red;
+   font-weight: bold;
+ }
+ 
