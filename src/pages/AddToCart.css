@@ -1,5 +1,4 @@
 .items-section {
-    /* margin-left: 16px; */
     width: 100%;
     margin-bottom: 16px;
     display: block;
@@ -31,7 +30,7 @@
 
 .header-row {
     display: grid;
-    grid-template-columns: 0.5fr 1fr 0.5fr 1fr 0.5fr 1fr;
+    grid-template-columns: 0.2fr 1.5fr 0.5fr 1fr 0.5fr 1.5fr;
     gap: 10px;
     font-weight: bold;
     text-align: center;
@@ -45,7 +44,7 @@
 
 .item-row {
     display: grid;
-    grid-template-columns: 0.5fr 1fr 0.5fr 1fr 0.5fr 1fr;
+    grid-template-columns: 0.2fr 1.5fr 0.5fr 1fr 0.5fr 1.5fr;
     gap: 10px;
     text-align: center;
     align-items: center;
@@ -54,13 +53,29 @@
 
 .item-cell {
     padding: 5px;
+    position: relative; /* For positioning the remove button */
+}
+
+.remove-button {
+    padding: 4px 8px;
+    font-size: 12px;
+    
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    position: absolute; /* Position it inside the item cell */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 20px; /* Add some margin from the S.No */
 }
 
 .total-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 8px 0;
+    margin-top: 20px;
+    margin-left: 8px;
 }
 
 .date-text {
@@ -88,4 +103,20 @@
 
 .inputcls {
     flex: 1;
+}
+
+@media print {
+    .remove-button {
+        display: none;
+    }
+    .ion-button {
+        display: none;
+    }
+    .headercls {
+        box-shadow: none;
+        border: none;
+    }
+    .footer {
+        display: none;
+    }
 }

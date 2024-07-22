@@ -46,7 +46,7 @@ const useSQLiteDB = () => {
       await action(db.current);
     } catch (error) {
       if ((error as Error).message.includes("UNIQUE constraint failed")) {
-        alert("A medicine with this name already exists. Please use a different name.");
+        alert("A record with this name already exists. Please use a different name.");
       } else {
         alert((error as Error).message);
       }
@@ -73,10 +73,12 @@ const useSQLiteDB = () => {
       `;
 
       const queryCreateGeneralItemsTable = `
-        CREATE TABLE IF NOT EXISTS general_items (
+        CREATE TABLE IF NOT EXISTS generalItems (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT,
           quantity TEXT,
+          expiry_date TEXT,
+          batch_no TEXT,
           price REAL
         );
       `;

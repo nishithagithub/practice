@@ -70,7 +70,7 @@ const Add: React.FC = () => {
             </IonCol>
             <IonCol className="custom-col1 col-margin">
               <IonImg src="https://images.pexels.com/photos/3875083/pexels-photo-3875083.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" className='box-image'/>
-              <IonRouterLink className='full-link' routerLink="/general">General Items</IonRouterLink>
+              <IonRouterLink className='full-link' routerLink="/add/general-items">General Items</IonRouterLink>
             </IonCol>
           </IonRow>
         </IonGrid>

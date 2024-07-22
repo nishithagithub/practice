@@ -6,6 +6,7 @@ import Medicines from './pages/Medicines'; // Import Medicines component
 import GeneralItems from './pages/GeneralItems'; // Import GeneralItems component
 import Add from './pages/Add'; // Import Add component
 import AddToCart from './pages/AddToCart'; // Import AddToCart component
+import ViewGeneralItems from './pages/ViewGeneralItems';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -60,6 +61,7 @@ const App: React.FC = () => (
         <Route exact path="/add/general-items"> {/* Define route for General Items */}
           <GeneralItems />
         </Route>
+        <Route path="/view-items" component={ViewGeneralItems} />
         <Route exact path="/add-to-cart"> {/* Define route for AddToCart */}
           <AddToCart />
         </Route>

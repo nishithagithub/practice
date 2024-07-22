@@ -31,7 +31,6 @@ type MedicineItem = {
 
 const ViewMedicines: React.FC = () => {
   const [items, setItems] = useState<Array<MedicineItem>>([]);
-  const [expiredItems, setExpiredItems] = useState<Array<MedicineItem>>([]);
   const [editItem, setEditItem] = useState<MedicineItem | undefined>();
   const [inputName, setInputName] = useState("");
   const [inputType, setInputType] = useState("");
@@ -45,60 +44,19 @@ const ViewMedicines: React.FC = () => {
 
   useEffect(() => {
     if (initialized) {
-      createExpiredItemsTable();
       loadData();
     }
   }, [initialized]);
 
-  const createExpiredItemsTable = async () => {
-    try {
-      performSQLAction(async (db: SQLiteDBConnection | undefined) => {
-        await db?.query(`
-          CREATE TABLE IF NOT EXISTS expired_items (
-            id INTEGER PRIMARY KEY,
-            name TEXT,
-            type TEXT,
-            quantity TEXT,
-            expiry_date TEXT,
-            batch_no TEXT,
-            price REAL
-          )
-        `);
-      });
-    } catch (error) {
-      alert((error as Error).message);
-    }
-  };
-
   const loadData = async () => {
     try {
       performSQLAction(async (db: SQLiteDBConnection | undefined) => {
-        const currentDate = new Date().toISOString().split('T')[0];
-        
         const respSelect = await db?.query(`SELECT * FROM medicines`);
-        const allItems = respSelect?.values || [];
-
-        const nonExpiredItems = allItems.filter((item: MedicineItem) => item.expiry_date >= currentDate);
-        const expiredItems = allItems.filter((item: MedicineItem) => item.expiry_date < currentDate);
-
-        setItems(nonExpiredItems);
-        setExpiredItems(expiredItems);
-
-        await moveExpiredItems(expiredItems, db);
-        await db?.query(`DELETE FROM medicines WHERE expiry_date < ?;`, [currentDate]);
+        setItems(respSelect?.values || []);
       });
     } catch (error) {
       alert((error as Error).message);
       setItems([]);
-    }
-  };
-
-  const moveExpiredItems = async (expiredItems: Array<MedicineItem>, db: SQLiteDBConnection | undefined) => {
-    for (const item of expiredItems) {
-      await db?.query(
-        `INSERT INTO expired_items (id, name, type, quantity, expiry_date, batch_no, price) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [item.id, item.name, item.type, item.quantity, item.expiry_date, item.batch_no, item.price]
-      );
     }
   };
 
@@ -119,7 +77,10 @@ const ViewMedicines: React.FC = () => {
             ]
           );
 
-          loadData(); // Reload data to refresh the list
+          const respSelect = await db?.query(`SELECT * FROM medicines;`);
+          setItems(respSelect?.values || []);
+        },
+        async () => {
           resetInputs();
         }
       );
@@ -133,7 +94,9 @@ const ViewMedicines: React.FC = () => {
       performSQLAction(
         async (db: SQLiteDBConnection | undefined) => {
           await db?.query(`DELETE FROM medicines WHERE id=?;`, [itemId]);
-          loadData(); // Reload data to refresh the list
+
+          const respSelect = await db?.query(`SELECT * FROM medicines;`);
+          setItems(respSelect?.values || []);
         }
       );
     } catch (error) {
@@ -174,41 +137,41 @@ const ViewMedicines: React.FC = () => {
   return (
     <IonPage>
       <IonHeader className='headercls'>
-    
-        View Medicines
-        
-      </IonHeader>
+      Data Table
+    </IonHeader>
       <IonContent fullscreen className="ion-padding">
-        <IonGrid>
-          <IonRow className='titles'>
-            <IonCol className='tablecol'>S.No</IonCol>
-            <IonCol className='tablecol'>Name</IonCol>
-            <IonCol className='tablecol'>Type</IonCol>
-            <IonCol className='tablecol'>Quantity</IonCol>
-            <IonCol className='tablecol'>Expiry Date</IonCol>
-            <IonCol className='tablecol'>Batch No</IonCol>
-            <IonCol className='tablecol'>Price</IonCol>
-            <IonCol className='tablecol'>Edit</IonCol>
-            <IonCol className='tablecol'>Delete</IonCol>
-          </IonRow>
-          {items?.map((item, index) => (
-            <IonRow key={item.id}>
-              <IonCol className='tablecol'>{index + 1}</IonCol>
-              <IonCol className='tablecol'>{item.name}</IonCol>
-              <IonCol className='tablecol'>{item.type}</IonCol>
-              <IonCol className='tablecol'>{item.quantity}</IonCol>
-              <IonCol className='tablecol'>{item.expiry_date}</IonCol>
-              <IonCol className='tablecol'>{item.batch_no}</IonCol>
-              <IonCol className='tablecol'>{item.price}</IonCol>
-              <IonCol className='tablecol'>
-                <IonButton color="light" onClick={() => doEditItem(item)}>EDIT</IonButton>
-              </IonCol>
-              <IonCol className='tablecol'>
-                <IonButton color="light" onClick={() => confirmDelete(item.id)}>DELETE</IonButton>
-              </IonCol>
+      <IonGrid>
+            <IonRow className='titles'>
+              <IonCol className='tablecol'>S.No</IonCol>
+              <IonCol className='tablecol'>Name</IonCol>
+              <IonCol className='tablecol'>Type</IonCol>
+              <IonCol className='tablecol'>Quantity</IonCol>
+              <IonCol className='tablecol'>Expiry Date</IonCol>
+              <IonCol className='tablecol'>Batch No</IonCol>
+              <IonCol className='tablecol'>Price</IonCol>
+              <IonCol className='tablecol'>Edit</IonCol>
+              <IonCol className='tablecol'>Delete</IonCol>
             </IonRow>
-          ))}
-        </IonGrid>
+            {items?.map((item, index) => (
+              <IonRow key={item.id}>
+                <IonCol className='tablecol'>{index+1}</IonCol>
+                <IonCol className='tablecol'>{item.name}</IonCol>
+                <IonCol className='tablecol'>{item.type}</IonCol>
+                <IonCol className='tablecol'>{item.quantity}</IonCol>
+                <IonCol className='tablecol'>{item.expiry_date}</IonCol>
+                <IonCol className='tablecol'>{item.batch_no}</IonCol>
+                <IonCol className='tablecol'>{item.price}</IonCol>
+                <IonCol className='tablecol'>
+                  <IonButton color="light" onClick={() => doEditItem(item)}>EDIT</IonButton>
+                  </IonCol>
+                  <IonCol className='tablecol'>
+                <IonButton color="light" onClick={() => confirmDelete(item.id)}>DELETE</IonButton>
+                </IonCol>
+                
+              </IonRow>
+            ))}
+          </IonGrid>
+        
 
         {editItem && (
           <>
@@ -266,35 +229,11 @@ const ViewMedicines: React.FC = () => {
         )}
 
         {ConfirmationAlert}
-
-        <h2>Expired Medicines</h2>
-        <IonGrid>
-          <IonRow className='titles'>
-            <IonCol className='tablecol'>S.No</IonCol>
-            <IonCol className='tablecol'>Name</IonCol>
-            <IonCol className='tablecol'>Type</IonCol>
-            <IonCol className='tablecol'>Quantity</IonCol>
-            <IonCol className='tablecol'>Expiry Date</IonCol>
-            <IonCol className='tablecol'>Batch No</IonCol>
-            <IonCol className='tablecol'>Price</IonCol>
-          </IonRow>
-          {expiredItems?.map((item, index) => (
-            <IonRow key={item.id}>
-              <IonCol className='tablecol'>{index + 1}</IonCol>
-              <IonCol className='tablecol'>{item.name}</IonCol>
-              <IonCol className='tablecol'>{item.type}</IonCol>
-              <IonCol className='tablecol'>{item.quantity}</IonCol>
-              <IonCol className='tablecol'>{item.expiry_date}</IonCol>
-              <IonCol className='tablecol'>{item.batch_no}</IonCol>
-              <IonCol className='tablecol'>{item.price}</IonCol>
-            </IonRow>
-          ))}
-        </IonGrid>
       </IonContent>
       <IonFooter className='footer'>
-        <IonText>Contact Us : 9010203040</IonText>
-        <IonText>Email : abc@gmail.com</IonText>
-      </IonFooter>
+      <IonText>Contact Us : 9010203040</IonText>
+      <IonText>Email : abc@gmail.com</IonText>
+    </IonFooter>
     </IonPage>
   );
 };
