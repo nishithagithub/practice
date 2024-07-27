@@ -40,7 +40,9 @@ import './theme/variables.css';
 import './pages/AddToCart.css'; // Import AddToCart CSS
 import ViewMedicines from './pages/ViewMedicines';
 import Search from './pages/Search';
-
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Homeafterlogin from './pages/Homeafterlogin'
 setupIonicReact();
 
 const App: React.FC = () => (
@@ -50,18 +52,30 @@ const App: React.FC = () => (
         <Route exact path="/home">
           <Home />
         </Route>
-        <Route exact path="/add"> {/* Define route for Add */}
+        <Route exact path="/homeafterlogin">
+          <Homeafterlogin/>
+        </Route>
+        <Route exact path="/Login">
+          <Login />
+        </Route>
+        <Route exact path="/SignUp">
+          <Signup />
+        </Route>
+        
+        <Route exact path="/add/:pharmacyName"> {/* Define route for Add */}
           <Add />
         </Route>
-        <Route exact path="/add/medicines"> {/* Define route for Medicines */}
+        <Route exact path="/add/medicines/:pharmacyName"> {/* Define route for Medicines */}
           <Medicines />
         </Route>
-        <Route path="/view-medicines" component={ViewMedicines} exact />
-        <Route path="/search" component={Search} exact />
-        <Route exact path="/add/general-items"> {/* Define route for General Items */}
+       
+       
+        <Route path="/view/:pharmacyName" component={ViewMedicines} exact />
+        <Route path="/search/:pharmacyName" component={Search} exact />
+        <Route exact path="/add/general-items/:pharmacyName"> {/* Define route for General Items */}
           <GeneralItems />
         </Route>
-        <Route path="/view-items" component={ViewGeneralItems} />
+        <Route path="/view-items/:pharmacyName" component={ViewGeneralItems} />
         <Route exact path="/add-to-cart"> {/* Define route for AddToCart */}
           <AddToCart />
         </Route>

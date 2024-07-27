@@ -1,0 +1,35 @@
+.signup-content {
+    --background: #f0f4f8;
+    padding: 20px;
+  }
+  
+  ion-item {
+    --background: #fff;
+    --color-focused: #ff69b4; /* Pink color for focused input */
+    --border-color: #1e90ff; /* Blue color for border */
+    margin-bottom: 15px;
+    --padding-start: 16px;
+    --padding-end: 16px;
+  }
+  
+  ion-label {
+    --color-focused: #ff69b4; /* Pink color for focused label */
+    --padding-start: 16px;
+  }
+  
+  ion-input {
+    --padding-start: 16px;
+  }
+  
+  ion-button {
+    --background: #ff69b4; /* Pink background for button */
+    --background-focused: #ff69b4;
+    --background-hover: #ff69b4;
+    --background-activated: #ff69b4;
+  }
+  
+  ion-footer {
+    text-align: center;
+    padding: 10px;
+  }
+  

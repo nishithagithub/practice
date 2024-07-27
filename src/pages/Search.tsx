@@ -14,11 +14,15 @@ import {
   IonListHeader,
 } from "@ionic/react";
 import React, { useState, useEffect, useRef } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import useSQLiteDB from "../composables/useSQLiteDB";
 
+interface RouteState {
+  pharmacyName: string;
+}
+
 const Search: React.FC = () => {
-  const [searchType, setSearchType] = useState<"medicines" | "generalItems">("medicines");
+  const [searchType, setSearchType] = useState<"medicines" | "general_items">("medicines");
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -26,13 +30,25 @@ const Search: React.FC = () => {
   const [toastMessage, setToastMessage] = useState("");
   const inputRef = useRef<HTMLIonInputElement>(null);
 
-  const { performSQLAction } = useSQLiteDB();
+  const location = useLocation();
   const history = useHistory();
+  const state = location.state as RouteState | undefined;
+  const pharmacyName = state?.pharmacyName || '';
+  
+  const { performSQLAction } = useSQLiteDB(pharmacyName);
+
+  const navigateTo = (path: string) => {
+    history.push({
+      pathname: path,
+      state: { pharmacyName }
+    });
+  };
 
   useEffect(() => {
-    setSearchResults([]);
-    setSearchText("");
-  }, [searchType]);
+    if (pharmacyName) {
+      fetchAllItems();
+    }
+  }, [searchType, pharmacyName]);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -53,6 +69,14 @@ const Search: React.FC = () => {
     };
   }, [searchText]);
 
+  const fetchAllItems = async () => {
+    await performSQLAction(async (db) => {
+      const query = `SELECT * FROM ${searchType}_${pharmacyName}`;
+      const results = await db?.query(query);
+      setSearchResults(results?.values ?? []);
+    });
+  };
+
   const searchItems = async () => {
     if (!searchText.trim()) {
       setToastMessage("Please enter a search term.");
@@ -61,7 +85,7 @@ const Search: React.FC = () => {
     }
 
     await performSQLAction(async (db) => {
-      const query = `SELECT * FROM ${searchType} WHERE name LIKE ?`;
+      const query = `SELECT * FROM ${searchType}_${pharmacyName} WHERE name LIKE ?`;
       const results = await db?.query(query, [`%${searchText}%`]);
       const items = results?.values ?? [];
 
@@ -82,67 +106,46 @@ const Search: React.FC = () => {
     }
 
     await performSQLAction(async (db) => {
-      const query = `SELECT name FROM ${searchType} WHERE name LIKE ? LIMIT 5`;
+      const query = `SELECT name FROM ${searchType}_${pharmacyName} WHERE name LIKE ? LIMIT 5`;
       const results = await db?.query(query, [`${text}%`]);
       const items = results?.values ?? [];
       setSuggestions(items);
     });
   };
 
-  const addToCart = async (item: any, quantity: number = 1) => {
+  const addToCart = async (item: any, quantity: number) => {
     if (quantity <= 0 || quantity > item.quantity) {
       setToastMessage("Invalid quantity.");
       setShowToast(true);
       return;
     }
 
+    const newItem = { ...item, quantity };
+    const newQuantity = item.quantity - quantity;
+
     await performSQLAction(async (db) => {
-      let cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
-      
-      // Check if the item already exists in the cart under the correct category
-      const cartItemIndex = cartItems.findIndex((cartItem: any) =>
-        cartItem.id === item.id && cartItem.type === searchType
-      );
-
-      if (cartItemIndex > -1) {
-        // Item already in cart, increment quantity
-        cartItems[cartItemIndex].quantity += quantity;
-      } else {
-        // New item to add to cart
-        const newItem = { ...item, quantity, type: searchType };
-        cartItems.push(newItem);
-      }
-
-      const newQuantity = item.quantity - quantity;
-      if (newQuantity < 0) {
-        setToastMessage("Invalid quantity.");
-        setShowToast(true);
-        return;
-      }
-      await db?.query(`UPDATE ${searchType} SET quantity = ? WHERE id = ?`, [newQuantity, item.id]);
-
-      localStorage.setItem('cartItems', JSON.stringify(cartItems));
-
-      setToastMessage("Item added to cart.");
-      setShowToast(true);
-
-      // Update local state to reflect the new quantity
-      setSearchResults(prevResults =>
-        prevResults.map(result =>
-          result.id === item.id ? { ...result, quantity: newQuantity } : result
-        )
-      );
-
-      // Clear input field
-      const inputElement = document.getElementById(`quantity-${item.id}`) as HTMLInputElement;
-      if (inputElement) {
-        inputElement.value = '';
-      }
+      await db?.query(`UPDATE ${searchType}_${pharmacyName} SET quantity = ? WHERE id = ?`, [newQuantity, item.id]);
     });
+
+    let cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    
+    cartItems.push(newItem);
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    
+
+    setToastMessage("Item added to cart.");
+    setShowToast(true);
+
+    await searchItems();
+
+    const inputElement = document.getElementById(`quantity-${item.id}`) as HTMLInputElement;
+    if (inputElement) {
+      inputElement.value = '';
+    }
   };
 
   const goToCart = () => {
-    history.push('/add-to-cart');
+    navigateTo('/add-to-cart');
   };
 
   return (
@@ -153,16 +156,16 @@ const Search: React.FC = () => {
           <IonButton shape="round" color="light" onClick={goToCart}>Cart</IonButton>
         </div>
       </IonHeader>
-
+      
       <IonContent fullscreen className="ion-padding">
         <IonItem className="itemcls">
           <IonLabel className="labelcls">Type</IonLabel>
           <IonSelect
             value={searchType}
-            onIonChange={(e) => setSearchType(e.detail.value as "medicines" | "generalItems")}
+            onIonChange={(e) => setSearchType(e.detail.value as "medicines" | "general_items")}
           >
             <IonSelectOption value="medicines">Medicines</IonSelectOption>
-            <IonSelectOption value="generalItems">General Items</IonSelectOption>
+            <IonSelectOption value="general_items">General Items</IonSelectOption>
           </IonSelect>
         </IonItem>
         <div className="form-container">
@@ -204,12 +207,8 @@ const Search: React.FC = () => {
                 <p><strong>Name:</strong> {item.name}</p>
                 <p><strong>Type:</strong> {searchType}</p>
                 <p><strong>Quantity:</strong> {item.quantity}</p>
-                {searchType === "medicines" && (
-                  <>
-                    <p><strong>Expiry Date:</strong> {item.expiry_date}</p>
-                    <p><strong>Batch No:</strong> {item.batch_no}</p>
-                  </>
-                )}
+                <p><strong>Expiry Date:</strong> {item.expiry_date}</p>
+                <p><strong>Batch No:</strong> {item.batch_no}</p>
                 <p><strong>Price:</strong> Rs. {item.price}</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -220,7 +219,7 @@ const Search: React.FC = () => {
                 />
                 <IonButton color="light" onClick={() => {
                   const inputElement = document.getElementById(`quantity-${item.id}`) as HTMLInputElement;
-                  const quantity = parseInt(inputElement.value) || 1;
+                  const quantity = parseInt(inputElement.value);
                   addToCart(item, quantity);
                 }}>Add to Cart</IonButton>
               </div>

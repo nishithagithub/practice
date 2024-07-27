@@ -1,48 +1,54 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { IonAlert } from "@ionic/react";
 
 const useConfirmationAlert = () => {
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-  const [confirmAction, setConfirmAction] = useState<() => void>();
+  const [alert, setAlert] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
 
-  const showConfirmationAlert = (
-    message: React.SetStateAction<string>,
-    onConfirm: () => void
-  ) => {
-    setAlertMessage(message);
-    setConfirmAction(() => onConfirm);
-    setShowAlert(true);
+  const showConfirmationAlert = (message: string, onConfirm: () => void) => {
+    setAlert({
+      isOpen: true,
+      message,
+      onConfirm,
+    });
   };
 
   const handleConfirm = () => {
-    confirmAction && confirmAction();
-    setShowAlert(false);
+    if (alert) {
+      alert.onConfirm();
+      setAlert(null);
+    }
   };
 
   const handleCancel = () => {
-    setShowAlert(false);
+    setAlert(null);
   };
+
+  const ConfirmationAlert = alert ? (
+    <IonAlert
+      isOpen={alert.isOpen}
+      message={alert.message}
+      buttons={[
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          handler: handleCancel,
+        },
+        {
+          text: 'Confirm',
+          handler: handleConfirm,
+        },
+      ]}
+      onDidDismiss={() => setAlert(null)}
+    />
+  ) : null;
 
   return {
     showConfirmationAlert,
-    ConfirmationAlert: (
-      <IonAlert
-        isOpen={showAlert}
-        message={alertMessage}
-        buttons={[
-          {
-            text: "Cancel",
-            role: "cancel",
-            handler: handleCancel,
-          },
-          {
-            text: "Confirm",
-            handler: handleConfirm,
-          },
-        ]}
-      />
-    ),
+    ConfirmationAlert,
   };
 };
 

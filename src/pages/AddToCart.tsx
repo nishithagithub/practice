@@ -25,25 +25,38 @@ const AddToCart: React.FC = () => {
     const [toastMessage, setToastMessage] = useState("");
 
     useEffect(() => {
-        const storedCartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
-        setCartItems(storedCartItems.map((item: { discount: any; }) => ({
-            ...item,
-            discount: item.discount || 0 // Ensure discount is always present
-        })));
+        const storedCartItems = localStorage.getItem("cartItems");
+        if (storedCartItems) {
+            try {
+                const parsedItems = JSON.parse(storedCartItems);
+                if (Array.isArray(parsedItems)) {
+                    setCartItems(parsedItems);
+                } else {
+                    console.error("Cart items format is incorrect.");
+                }
+            } catch (e) {
+                console.error("Error parsing cart items:", e);
+            }
+        }
+
+        const storedPharmacyName = localStorage.getItem("pharmacyName");
+        if (storedPharmacyName) {
+            setPharmacyName(storedPharmacyName);
+        }
     }, []);
 
     const applyDiscount = (price: number, discount: number) => {
         return price - (price * discount / 100);
     };
 
-    const calculateTotal = (items: any[]) => 
+    const calculateTotal = (items: any[]) =>
         items.reduce((total, item) => total + applyDiscount(item.price, item.discount) * item.quantity, 0);
 
-    const cartItemsByType = (type: string) => 
+    const cartItemsByType = (type: string) =>
         cartItems.filter(item => item.type === type);
 
     const medicinesTotal = calculateTotal(cartItemsByType("medicines"));
-    const generalItemsTotal = calculateTotal(cartItemsByType("generalItems"));
+    const generalItemsTotal = calculateTotal(cartItemsByType("general_items"));
 
     const gstAmount = (medicinesTotal + generalItemsTotal) * gstRate / 100;
     const finalTotal = medicinesTotal + generalItemsTotal + gstAmount;
@@ -107,6 +120,7 @@ const AddToCart: React.FC = () => {
                         <div className="header-cell">Price</div>
                         <div className="header-cell">Discount (%) / Price</div>
                     </div>
+                 
                     {cartItemsByType("medicines").length === 0 ? (
                         <div className="no-items">
                             <IonLabel className="labelcls">No items found</IonLabel>
@@ -133,7 +147,7 @@ const AddToCart: React.FC = () => {
                                             onIonChange={(e) => {
                                                 const newQuantity = Number(e.detail.value);
                                                 setCartItems(prevItems =>
-                                                    prevItems.map((prevItem, i) =>
+                                                    prevItems.map(prevItem =>
                                                         prevItem.id === item.id
                                                             ? { ...prevItem, quantity: newQuantity }
                                                             : prevItem
@@ -151,7 +165,7 @@ const AddToCart: React.FC = () => {
                                             onIonChange={(e) => {
                                                 const newDiscount = Number(e.detail.value);
                                                 setCartItems(prevItems =>
-                                                    prevItems.map((prevItem, i) =>
+                                                    prevItems.map(prevItem =>
                                                         prevItem.id === item.id
                                                             ? { ...prevItem, discount: newDiscount }
                                                             : prevItem
@@ -183,13 +197,13 @@ const AddToCart: React.FC = () => {
                         <div className="header-cell">Price</div>
                         <div className="header-cell">Discount (%) / Price</div>
                     </div>
-                    {cartItemsByType("generalItems").length === 0 ? (
+                    {cartItemsByType("general_items").length === 0 ? (
                         <div className="no-items">
                             <IonLabel className="labelcls">No items found</IonLabel>
                         </div>
                     ) : (
                         <div className="items-list">
-                            {cartItemsByType("generalItems").map((item, index) => (
+                            {cartItemsByType("general_items").map((item, index) => (
                                 <div key={item.id} className="item-row">
                                     <div className="item-cell">
                                         {index + 1}
@@ -209,7 +223,7 @@ const AddToCart: React.FC = () => {
                                             onIonChange={(e) => {
                                                 const newQuantity = Number(e.detail.value);
                                                 setCartItems(prevItems =>
-                                                    prevItems.map((prevItem, i) =>
+                                                    prevItems.map(prevItem =>
                                                         prevItem.id === item.id
                                                             ? { ...prevItem, quantity: newQuantity }
                                                             : prevItem
@@ -227,7 +241,7 @@ const AddToCart: React.FC = () => {
                                             onIonChange={(e) => {
                                                 const newDiscount = Number(e.detail.value);
                                                 setCartItems(prevItems =>
-                                                    prevItems.map((prevItem, i) =>
+                                                    prevItems.map(prevItem =>
                                                         prevItem.id === item.id
                                                             ? { ...prevItem, discount: newDiscount }
                                                             : prevItem
@@ -247,22 +261,11 @@ const AddToCart: React.FC = () => {
                     </div>
                 </div>
 
-                <IonItem className="itemcls">
-                    <IonLabel className="labelcls">GST Rate (%):</IonLabel>
-                    <IonInput
-                        type="number"
-                        value={gstRate}
-                        onIonChange={(e) => setGstRate(Number(e.detail.value))}
-                    />
-                </IonItem>
-                <IonItem className="itemcls">
-                    <IonLabel className="labelcls">Grand Total:</IonLabel>
-                    <IonText>{finalTotal} ₹</IonText>
-                </IonItem>
-
-                <IonButton color="light" onClick={handleSave}>Save</IonButton>
-                <IonButton color="light" onClick={handlePrint}>Print</IonButton>
-                <IonButton color="light" onClick={handleShare}>Share</IonButton>
+                <div className="footer-actions">
+                    <IonButton onClick={handleSave}>Save</IonButton>
+                    <IonButton onClick={handlePrint}>Print</IonButton>
+                    <IonButton onClick={handleShare}>Share</IonButton>
+                </div>
 
                 <IonToast
                     isOpen={showToast}
@@ -271,33 +274,9 @@ const AddToCart: React.FC = () => {
                     duration={2000}
                 />
             </IonContent>
-            <IonFooter className='footer'>
-                <IonText>Contact Us : 9010203040</IonText>
-                <IonText>Email : abc@gmail.com</IonText>
+            <IonFooter className='footercls'>
+                <IonText>Total Amount (Including GST): {finalTotal} ₹</IonText>
             </IonFooter>
-
-
-                {/* <div className="footer">
-                    <IonLabel className="labelcls">GST Amount:</IonLabel>
-                    <IonText className="total-amount">{gstAmount} ₹</IonText>
-                </div>
-
-                <div className="footer">
-                    <IonLabel className="labelcls">Final Total:</IonLabel>
-                    <IonText className="total-amount">{finalTotal} ₹</IonText>
-                </div>
-            </IonContent>
-            <IonFooter className='footer'>
-                <IonButton onClick={handleSave}>Save</IonButton>
-                <IonButton onClick={handlePrint}>Print</IonButton>
-                <IonButton onClick={handleShare}>Share</IonButton>
-            </IonFooter>
-            <IonToast
-                isOpen={showToast}
-                onDidDismiss={() => setShowToast(false)}
-                message={toastMessage}
-                duration={2000}
-            /> */}
         </IonPage>
     );
 };

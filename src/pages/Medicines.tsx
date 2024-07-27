@@ -1,8 +1,6 @@
 import {
   IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
   IonContent,
   IonItem,
   IonButton,
@@ -13,11 +11,18 @@ import {
   IonToast,
   IonFooter,
   IonText,
+  IonToolbar,
+  IonTitle
 } from "@ionic/react";
 import React, { useState, useEffect } from "react";
 import useSQLiteDB from "../composables/useSQLiteDB";
-import { useHistory } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import './Medicines.css';
+
+// Define an interface for route state
+interface RouteState {
+  pharmacyName: string;
+}
 
 const Medicines: React.FC = () => {
   const [inputName, setInputName] = useState("");
@@ -29,12 +34,19 @@ const Medicines: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  const { performSQLAction } = useSQLiteDB();
+  // Use the RouteState interface to type the location state
+  const location = useLocation<RouteState>();
   const history = useHistory();
+  const pharmacyName = location.state?.pharmacyName || '';
+
+  // Initialize useSQLiteDB with pharmacyName
+  const { performSQLAction, initialized } = useSQLiteDB(pharmacyName);
 
   useEffect(() => {
-    deleteExpiredMedicines();
-  }, []);
+    if (initialized) {
+      deleteExpiredMedicines();
+    }
+  }, [initialized]);
 
   const validateInputs = () => {
     const currentDate = new Date().toISOString().split('T')[0];
@@ -80,9 +92,11 @@ const Medicines: React.FC = () => {
   const addItem = async () => {
     if (!validateInputs()) return;
 
+    const tableName = `medicines_${pharmacyName}`;
+
     await performSQLAction(async (db) => {
       await db?.query(
-        `INSERT INTO medicines (name, type, quantity, expiry_date, batch_no, price) VALUES (?, ?, ?, ?, ?, ?);`,
+        `INSERT INTO ${tableName} (name, type, quantity, expiry_date, batch_no, price) VALUES (?, ?, ?, ?, ?, ?);`,
         [inputName, inputType, inputQuantity, inputExpiryDate, inputBatchNo, inputPrice]
       );
       resetInputs();
@@ -100,99 +114,94 @@ const Medicines: React.FC = () => {
     setInputPrice(undefined);
   };
 
-  const viewMedicines = () => {
-    history.push('/view-medicines'); // Adjust the route to the actual view medicines page
-  };
-
   const deleteExpiredMedicines = async () => {
     await performSQLAction(async (db) => {
       const currentDate = new Date().toISOString().split('T')[0];
+      const tableName = `medicines_${pharmacyName}`;
       await db?.query(
-        `DELETE FROM medicines WHERE expiry_date < ?;`,
+        `DELETE FROM ${tableName} WHERE expiry_date < ?;`,
         [currentDate]
       );
     });
   };
 
+  const viewMedicines = () => {
+    history.push({
+      pathname: `/view/${pharmacyName}`,
+      state: { pharmacyName }
+    });
+  };
+
   return (
     <IonPage>
-      <IonHeader className='headercls'>
-       
-          Add Medicines
-        
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>Add Medicines</IonTitle>
+        </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent className="ion-padding">
         <div className="form-container">
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Name <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Name</IonLabel>
             <IonInput
-              type="text"
               value={inputName}
               onIonInput={(e) => setInputName(e.target.value as string)}
-              required
             />
           </IonItem>
-          <IonItem className="itemcls">
-            <IonLabel className="labelcls">Type <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Type</IonLabel>
             <IonSelect
               value={inputType}
-              placeholder="Select One"
-              onIonChange={(e) => setInputType(e.detail.value)}
-             
+              placeholder="Select Type"
+              onIonChange={(e) => setInputType(e.detail.value as string)}
             >
-              <IonSelectOption value="strip" className="labelcls">Strip</IonSelectOption>
-              <IonSelectOption value="tube" className="labelcls">Tube</IonSelectOption>
-              <IonSelectOption value="powder" className="labelcls">Powder</IonSelectOption>
-              <IonSelectOption value="liquid" className="labelcls">Liquid</IonSelectOption>
+              <IonSelectOption value="Tablet">Tablet</IonSelectOption>
+              <IonSelectOption value="Syrup">Syrup</IonSelectOption>
+              <IonSelectOption value="Ointment">Ointment</IonSelectOption>
             </IonSelect>
           </IonItem>
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Quantity <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Quantity</IonLabel>
             <IonInput
-              type="text"
+              type="number"
               value={inputQuantity}
               onIonInput={(e) => setInputQuantity(e.target.value as string)}
-              required
             />
           </IonItem>
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Expiry Date <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Expiry Date</IonLabel>
             <IonInput
               type="date"
               value={inputExpiryDate}
               onIonInput={(e) => setInputExpiryDate(e.target.value as string)}
-              required
             />
           </IonItem>
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Batch No <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Batch No</IonLabel>
             <IonInput
-              type="text"
               value={inputBatchNo}
               onIonInput={(e) => setInputBatchNo(e.target.value as string)}
-              required
             />
           </IonItem>
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Price (Rs.) <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Price</IonLabel>
             <IonInput
               type="number"
               value={inputPrice}
-              onIonInput={(e) => setInputPrice(Number(e.target.value))}
-              required
+              onIonInput={(e) => setInputPrice(parseFloat(e.target.value as string))}
             />
           </IonItem>
-          <IonButton expand="block" onClick={addItem} color="primary">Add Medicine</IonButton>
-          <IonButton expand="block" onClick={viewMedicines} color="light">View Medicines</IonButton>
+          <IonButton expand="full" onClick={addItem}>Add Medicine</IonButton>
+          <IonButton expand="full" onClick={viewMedicines} color="light">View Medicines</IonButton>
           <IonToast
             isOpen={showToast}
-            onDidDismiss={() => setShowToast(false)}
             message={toastMessage}
-            duration={2000}
+            duration={3000}
+            onDidDismiss={() => setShowToast(false)}
           />
         </div>
       </IonContent>
-      <IonFooter className='footer'>
+      <IonFooter>
         <IonText>Contact Us : 9010203040</IonText>
         <IonText>Email : abc@gmail.com</IonText>
       </IonFooter>

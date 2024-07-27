@@ -1,8 +1,6 @@
 import {
   IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
   IonContent,
   IonItem,
   IonButton,
@@ -11,15 +9,20 @@ import {
   IonToast,
   IonFooter,
   IonText,
+  IonToolbar,
+  IonTitle
 } from "@ionic/react";
-
-//Committed
 import React, { useState, useEffect } from "react";
 import useSQLiteDB from "../composables/useSQLiteDB";
-import { useHistory } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import './GeneralItems.css';
 
-const GeneralItems: React.FC = () => {
+// Define an interface for route state
+interface RouteState {
+  pharmacyName: string;
+}
+
+const General: React.FC = () => {
   const [inputName, setInputName] = useState("");
   const [inputQuantity, setInputQuantity] = useState("");
   const [inputExpiryDate, setInputExpiryDate] = useState("");
@@ -28,12 +31,19 @@ const GeneralItems: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  const { performSQLAction } = useSQLiteDB();
+  // Use the RouteState interface to type the location state
+  const location = useLocation<RouteState>();
   const history = useHistory();
+  const pharmacyName = location.state?.pharmacyName || '';
+
+  // Initialize useSQLiteDB with pharmacyName
+  const { performSQLAction, initialized } = useSQLiteDB(pharmacyName);
 
   useEffect(() => {
-    deleteExpiredItems();
-  }, []);
+    if (initialized) {
+      deleteExpiredItems();
+    }
+  }, [initialized]);
 
   const validateInputs = () => {
     const currentDate = new Date().toISOString().split('T')[0];
@@ -43,7 +53,6 @@ const GeneralItems: React.FC = () => {
       setShowToast(true);
       return false;
     }
-    
     if (!inputQuantity) {
       setToastMessage("Quantity is required");
       setShowToast(true);
@@ -75,15 +84,34 @@ const GeneralItems: React.FC = () => {
   const addItem = async () => {
     if (!validateInputs()) return;
 
-    await performSQLAction(async (db) => {
-      await db?.query(
-        `INSERT INTO generalItems (name, quantity, expiry_date, batch_no, price) VALUES (?, ?, ?, ?, ?);`,
-        [inputName, inputQuantity, inputExpiryDate, inputBatchNo, inputPrice]
-      );
-      resetInputs();
-      setToastMessage("Item added successfully!");
+    const tableName = `general_items_${pharmacyName}`;
+
+    try {
+      await performSQLAction(async (db) => {
+        console.log("Running SQL to insert item");
+        console.log(`Values: Name=${inputName}, Quantity=${inputQuantity}, ExpiryDate=${inputExpiryDate}, BatchNo=${inputBatchNo}, Price=${inputPrice}`);
+        await db?.run(
+          `INSERT INTO ${tableName} (name, quantity, expiry_date, batch_no, price) VALUES (?, ?, ?, ?, ?);`,
+          [inputName, inputQuantity, inputExpiryDate, inputBatchNo, inputPrice]
+        );
+        resetInputs();
+        setToastMessage("Item added successfully!");
+        setShowToast(true);
+        console.log("Item added successfully!");
+      });
+    } catch (error) {
+      let errorMessage = "An unexpected error occurred";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      } else if (typeof error === "object" && error !== null) {
+        errorMessage = JSON.stringify(error);
+      }
+      console.error("Error executing SQL action", error);
+      setToastMessage(`Error adding item: ${errorMessage}`);
       setShowToast(true);
-    });
+    }
   };
 
   const resetInputs = () => {
@@ -94,86 +122,79 @@ const GeneralItems: React.FC = () => {
     setInputPrice(undefined);
   };
 
-  const viewItems = () => {
-    history.push('/view-items'); // Adjust the route to the actual view general items page
-  };
-
   const deleteExpiredItems = async () => {
+    const tableName = `general_items_${pharmacyName}`;
     await performSQLAction(async (db) => {
       const currentDate = new Date().toISOString().split('T')[0];
-      await db?.query(
-        `DELETE FROM generalItems WHERE expiry_date < ?;`,
-        [currentDate]
-      );
+      await db?.run(`DELETE FROM ${tableName} WHERE expiry_date < ?;`, [currentDate]);
+    });
+  };
+
+  const viewItems = () => {
+    history.push({
+      pathname: `/view-items/${pharmacyName}`,
+      state: { pharmacyName }
     });
   };
 
   return (
     <IonPage>
-      <IonHeader className='headercls'>
-        
+      <IonHeader>
+        <IonToolbar>
           <IonTitle>Add General Items</IonTitle>
-        
+        </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent className="ion-padding">
         <div className="form-container">
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Name <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Name</IonLabel>
             <IonInput
-              type="text"
               value={inputName}
               onIonInput={(e) => setInputName(e.target.value as string)}
-              required
             />
           </IonItem>
-          
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Quantity <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Quantity</IonLabel>
             <IonInput
-              type="text"
+              type="number"
               value={inputQuantity}
               onIonInput={(e) => setInputQuantity(e.target.value as string)}
-              required
             />
           </IonItem>
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Expiry Date <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Expiry Date</IonLabel>
             <IonInput
               type="date"
               value={inputExpiryDate}
               onIonInput={(e) => setInputExpiryDate(e.target.value as string)}
-              required
             />
           </IonItem>
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Batch No <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Batch No</IonLabel>
             <IonInput
-              type="text"
               value={inputBatchNo}
               onIonInput={(e) => setInputBatchNo(e.target.value as string)}
-              required
             />
           </IonItem>
-          <IonItem className="itemcls">
-            <IonLabel position="floating" className="labelcls">Price (Rs.) <span className="required">*</span></IonLabel>
+          <IonItem className="form-item">
+            <IonLabel>Price</IonLabel>
             <IonInput
               type="number"
               value={inputPrice}
-              onIonInput={(e) => setInputPrice(Number(e.target.value))}
-              required
+              onIonInput={(e) => setInputPrice(parseFloat(e.target.value as string))}
             />
           </IonItem>
-          <IonButton expand="block" onClick={addItem} color="primary">Add Item</IonButton>
-          <IonButton expand="block" onClick={viewItems} color="light">View Items</IonButton>
+          <IonButton expand="full" onClick={addItem}>Add Item</IonButton>
+          <IonButton expand="full" onClick={viewItems} color="light">View Items</IonButton>
           <IonToast
             isOpen={showToast}
-            onDidDismiss={() => setShowToast(false)}
             message={toastMessage}
-            duration={2000}
+            duration={3000}
+            onDidDismiss={() => setShowToast(false)}
           />
         </div>
       </IonContent>
-      <IonFooter className='footer'>
+      <IonFooter>
         <IonText>Contact Us : 9010203040</IonText>
         <IonText>Email : abc@gmail.com</IonText>
       </IonFooter>
@@ -181,4 +202,4 @@ const GeneralItems: React.FC = () => {
   );
 };
 
-export default GeneralItems;
+export default General;
