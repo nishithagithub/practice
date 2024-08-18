@@ -61,6 +61,8 @@ const Signup: React.FC = () => {
       setAlertMessage('Signup successful!');
       setShowAlert(true);
       // Redirect to homeafterlogin page after successful signup
+
+=======
       
         // On successful login, redirect to Home page with pharmacyName in state
         history.push({
@@ -68,6 +70,7 @@ const Signup: React.FC = () => {
           state: { pharmacyName }
         });
      
+
     }, (error) => {
       setAlertMessage(error.message);
       setShowAlert(true);
