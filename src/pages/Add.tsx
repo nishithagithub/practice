@@ -43,11 +43,11 @@ const Add: React.FC = () => {
           <IonRow className='custom-row1'>
             <IonCol className="custom-col1 col-margin">
               <IonImg src="https://images.pexels.com/photos/593451/pexels-photo-593451.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" className="box-image"/>
-              <IonButton className='full-link' onClick={navigateToMedicines}>Medicines</IonButton>
+              <IonButton className='full-link' onClick={navigateToMedicines}> Add Medicines</IonButton>
             </IonCol>
             <IonCol className="custom-col1 col-margin">
               <IonImg src="https://images.pexels.com/photos/3875083/pexels-photo-3875083.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" className='box-image'/>
-              <IonButton className='full-link' onClick={navigateToGeneralItems}>General Items</IonButton>
+              <IonButton className='full-link' onClick={navigateToGeneralItems}>Add General Items</IonButton>
             </IonCol>
           </IonRow>
         </IonGrid>
