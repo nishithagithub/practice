@@ -71,9 +71,11 @@ const Search: React.FC = () => {
 
   const fetchAllItems = async () => {
     await performSQLAction(async (db) => {
-      const query = `SELECT * FROM ${searchType}_${pharmacyName}`;
-      const results = await db?.query(query);
-      setSearchResults(results?.values ?? []);
+      if (db) {
+        const query = `SELECT * FROM ${searchType}_${pharmacyName}`;
+        const results = await db.query(query);
+        setSearchResults(results?.values ?? []);
+      }
     });
   };
 
@@ -85,17 +87,19 @@ const Search: React.FC = () => {
     }
 
     await performSQLAction(async (db) => {
-      const query = `SELECT * FROM ${searchType}_${pharmacyName} WHERE name LIKE ?`;
-      const results = await db?.query(query, [`%${searchText}%`]);
-      const items = results?.values ?? [];
+      if (db) {
+        const query = `SELECT * FROM ${searchType}_${pharmacyName} WHERE name LIKE ?`;
+        const results = await db.query(query, [`%${searchText}%`]);
+        const items = results?.values ?? [];
 
-      if (items.length === 0) {
-        setToastMessage("No results found.");
-        setShowToast(true);
+        if (items.length === 0) {
+          setToastMessage("No results found.");
+          setShowToast(true);
+        }
+
+        setSearchResults(items);
+        setSuggestions([]);
       }
-
-      setSearchResults(items);
-      setSuggestions([]);
     });
   };
 
@@ -106,10 +110,12 @@ const Search: React.FC = () => {
     }
 
     await performSQLAction(async (db) => {
-      const query = `SELECT name FROM ${searchType}_${pharmacyName} WHERE name LIKE ? LIMIT 5`;
-      const results = await db?.query(query, [`${text}%`]);
-      const items = results?.values ?? [];
-      setSuggestions(items);
+      if (db) {
+        const query = `SELECT name FROM ${searchType}_${pharmacyName} WHERE name LIKE ? LIMIT 5`;
+        const results = await db.query(query, [`${text}%`]);
+        const items = results?.values ?? [];
+        setSuggestions(items);
+      }
     });
   };
 
@@ -124,15 +130,17 @@ const Search: React.FC = () => {
     const newQuantity = item.quantity - quantity;
 
     await performSQLAction(async (db) => {
-      await db?.query(`UPDATE ${searchType}_${pharmacyName} SET quantity = ? WHERE id = ?`, [newQuantity, item.id]);
+      if (db) {
+        await db.query(`UPDATE ${searchType}_${pharmacyName} SET quantity = ? WHERE id = ?`, [newQuantity, item.id]);
+      }
     });
 
-    let cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    let cartItems = JSON.parse(localStorage.getItem(`cartItems_${pharmacyName}`) || '[]');
     
+    newItem.type = searchType;
     cartItems.push(newItem);
-    localStorage.setItem('cartItems', JSON.stringify(cartItems));
-    
-
+    localStorage.setItem(`cartItems_${pharmacyName}`, JSON.stringify(cartItems));
+    console.log(cartItems)
     setToastMessage("Item added to cart.");
     setShowToast(true);
 
@@ -145,9 +153,10 @@ const Search: React.FC = () => {
   };
 
   const goToCart = () => {
-    navigateTo('/add-to-cart');
+    const path = `/add-to-cart/${pharmacyName.replace(/\s+/g, '_')}`;
+    navigateTo(path);
   };
-
+  
   return (
     <IonPage>
       <IonHeader className='pgcolor'>

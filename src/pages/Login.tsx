@@ -28,6 +28,7 @@ const Login: React.FC = () => {
     if (!emailOrPhone || !password) {
       setToastMessage('Please enter both email/phone and password.');
       setShowToast(true);
+      
       return;
     }
 

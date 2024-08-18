@@ -28,12 +28,19 @@ const Home: React.FC = () => {
       state: { pharmacyName }
     });
   };
+  const handlelogout = () => {
+    localStorage.clear();
+    // Redirect to login page or perform other logout actions
+};
+
+
+
 
   return (
     <IonPage>
       <IonHeader className='pgcolor'>
         <div className="hd-button">
-          <IonButton shape="round" color="light" routerLink='/home'>LogOut</IonButton>
+          <IonButton shape="round" color="light" onClick={handlelogout} routerLink='/home'>LogOut</IonButton>
           
         </div>
       </IonHeader>
