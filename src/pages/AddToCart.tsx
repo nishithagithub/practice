@@ -1,3 +1,4 @@
+
 import {
   IonHeader,
   IonPage,
@@ -13,6 +14,7 @@ import {
 } from "@ionic/react";
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import jsPDF from "jspdf";
 import './AddToCart.css';
 
 interface RouteState {
@@ -77,42 +79,133 @@ const AddToCart: React.FC = () => {
     cartItems.filter(item => item.type === type);
 
   const medicinesTotalWithDiscount = calculateTotal(cartItemsByType("medicines"), true);
-  const medicinesTotalWithoutDiscount = calculateTotal(cartItemsByType("medicines"), false);
-
   const generalItemsTotalWithDiscount = calculateTotal(cartItemsByType("general_items"), true);
-  const generalItemsTotalWithoutDiscount = calculateTotal(cartItemsByType("general_items"), false);
-
-  const gstAmountWithDiscount = (medicinesTotalWithDiscount + generalItemsTotalWithDiscount) * gstRate / 100;
-  const finalTotalWithDiscount = medicinesTotalWithDiscount + generalItemsTotalWithDiscount + gstAmountWithDiscount;
-
-  const gstAmountWithoutDiscount = (medicinesTotalWithoutDiscount + generalItemsTotalWithoutDiscount) * gstRate / 100;
-  const finalTotalWithoutDiscount = medicinesTotalWithoutDiscount + generalItemsTotalWithoutDiscount + gstAmountWithoutDiscount;
 
   const handleSave = () => {
-    if (pharmacyName) {
-      localStorage.setItem(`cartItems_${pharmacyName}`, JSON.stringify(cartItems));
-      setToastMessage("Saved successfully.");
-      setShowToast(true);
-    } else {
-      setToastMessage("Pharmacy Name is required.");
-      setShowToast(true);
-    }
-  };
+    const doc = generatePDF();
+    doc.save("receipt.pdf");
+    setToastMessage("Saved successfully.");
+    setShowToast(true);
+};
+
+const generatePDF = () => {
+  const doc = new jsPDF();
+
+  doc.setFontSize(12);
+  doc.setFont('Helvetica', 'normal');
+
+  // Header
+  doc.text(`Pharmacy Name: ${pharmacyName}`, 10, 10);
+  doc.text(`Dr. Name: ${doctorName}`, 10, 20);
+  doc.text(`Patient Name: ${patientName}`, 10, 30);
+  doc.text(`Date: ${new Date().toLocaleDateString()}`, 10, 40);
+  doc.text(`GST No: ${gstNo}`, 10, 50);
+  doc.text('----------------------------------------', 10, 60);
+
+  // Medicines Table
+  let y = 70;
+  doc.setFontSize(10);
+  doc.text('Medicines', 10, y);
+  y += 10;
+  
+  // Header Row
+  doc.text('S.No', 10, y);
+  doc.text('Name', 30, y);
+  doc.text('Quantity', 80, y);
+  doc.text('Batch No', 110, y);
+  doc.text('Price', 140, y);
+  doc.text('Discount', 170, y);
+  y += 10;
+
+  // Item Rows
+  cartItemsByType("medicines").forEach((item, index) => {
+    doc.text(`${index + 1}`, 10, y);
+    doc.text(item.name, 30, y);
+    doc.text(`${item.quantity}`, 80, y);
+    doc.text(item.batch_no, 110, y);
+    doc.text(`${item.price} ₹`, 140, y);
+    doc.text(`${item.discount}%`, 170, y);
+    y += 10;
+  });
+
+  // Medicines Total
+  doc.text('----------------------------------------', 10, y);
+  y += 10;
+  doc.text(`Total: ${medicinesTotalWithDiscount} ₹`, 10, y);
+  y += 10;
+  doc.text(`GST: ${gstRate} %`, 10, y);
+  y += 10;
+  doc.text(`Final Total: ${medicinesTotalWithDiscount + (medicinesTotalWithDiscount * gstRate / 100)} ₹`, 10, y);
+
+  // General Items Table
+  y += 20;
+  doc.text('General Items', 10, y);
+  y += 10;
+
+  // Header Row
+  doc.text('S.No', 10, y);
+  doc.text('Name', 30, y);
+  doc.text('Quantity', 80, y);
+  doc.text('Price', 110, y);
+  doc.text('Discount', 140, y);
+  y += 10;
+
+  // Item Rows
+  cartItemsByType("general_items").forEach((item, index) => {
+    doc.text(`${index + 1}`, 10, y);
+    doc.text(item.name, 30, y);
+    doc.text(`${item.quantity}`, 80, y);
+    doc.text(`${item.price} ₹`, 110, y);
+    doc.text(`${item.discount}%`, 140, y);
+    y += 10;
+  });
+
+  // General Items Total
+  doc.text('----------------------------------------', 10, y);
+  y += 10;
+  doc.text(`Total: ${generalItemsTotalWithDiscount} ₹`, 10, y);
+  y += 10;
+  doc.text(`GST: ${gstRate} %`, 10, y);
+  y += 10;
+  doc.text(`Grand Total: ${generalItemsTotalWithDiscount + (generalItemsTotalWithDiscount * gstRate / 100) + medicinesTotalWithDiscount + (medicinesTotalWithDiscount * gstRate / 100)} ₹`, 10, y);
+
+  return doc;
+};
+
 
   const handlePrint = () => {
-    window.print();
+    const doc = generatePDF();
+    doc.autoPrint();
+    window.open(doc.output('bloburl'), '_blank');
   };
 
   const handleShare = () => {
-    setToastMessage("Shared successfully.");
-    setShowToast(true);
-  };
+    const doc = generatePDF();
+    const pdfBlob = doc.output('blob');
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(new File([pdfBlob], 'receipt.pdf', { type: 'application/pdf' }));
+
+    if (navigator.share) {
+        navigator.share({
+            title: 'Receipt',
+            files: dataTransfer.files
+        }).then(() => {
+            setToastMessage("Shared successfully.");
+            setShowToast(true);
+        }).catch((error) => {
+            console.error("Error sharing:", error);
+            setToastMessage("Sharing failed.");
+            setShowToast(true);
+        });
+    } else {
+        setToastMessage("Web Share API not supported.");
+        setShowToast(true);
+    }
+};
+
 
   const handleRemove = (index: number) => {
-    // Create a new array excluding the item at the given index
     const updatedCartItems = cartItems.filter((_, i) => i !== index);
-
-    // Update the cartItems state and localStorage with the new array
     setCartItems(updatedCartItems);
     localStorage.setItem(`cartItems_${pharmacyName}`, JSON.stringify(updatedCartItems));
   };
@@ -176,49 +269,14 @@ const AddToCart: React.FC = () => {
                     </IonButton>
                   </div>
                   <div className="item-cell">{item.name}</div>
-                  <div className="item-cell">
-                    <IonInput
-                      type="number"
-                      value={item.quantity}
-                      onIonChange={(e) => {
-                        const newQuantity = Number(e.detail.value);
-                        setCartItems(prevItems =>
-                          prevItems.map((prevItem, i) =>
-                            i === index
-                              ? { ...prevItem, quantity: newQuantity }
-                              : prevItem
-                          )
-                        );
-                      }}
-                    />
-                  </div>
+                  <div className="item-cell">{item.quantity}</div>
                   <div className="item-cell">{item.batch_no}</div>
                   <div className="item-cell">{item.price} ₹</div>
-                  <div className="item-cell">
-                    <IonInput
-                      type="number"
-                      value={item.discount}
-                      onIonChange={(e) => {
-                        const newDiscount = Number(e.detail.value);
-                        setCartItems(prevItems =>
-                          prevItems.map((prevItem, i) =>
-                            i === index
-                              ? { ...prevItem, discount: newDiscount }
-                              : prevItem
-                          )
-                        );
-                      }}
-                    />
-                    <div>{applyDiscount(item.price, item.discount)} ₹</div>
-                  </div>
+                  <div className="item-cell">{item.discount}%</div>
                 </div>
               ))}
             </div>
           )}
-          <div className="total-row">
-            <IonLabel className="labelcls">Total:</IonLabel>
-            <IonText className="total-text">{finalTotalWithDiscount} ₹</IonText>
-          </div>
         </div>
 
         <div className="items-section">
@@ -252,62 +310,34 @@ const AddToCart: React.FC = () => {
                     </IonButton>
                   </div>
                   <div className="item-cell">{item.name}</div>
-                  <div className="item-cell">
-                    <IonInput
-                      type="number"
-                      value={item.quantity}
-                      onIonChange={(e) => {
-                        const newQuantity = Number(e.detail.value);
-                        setCartItems(prevItems =>
-                          prevItems.map((prevItem, i) =>
-                            i === index
-                              ? { ...prevItem, quantity: newQuantity }
-                              : prevItem
-                          )
-                        );
-                      }}
-                    />
-                  </div>
+                  <div className="item-cell">{item.quantity}</div>
                   <div className="item-cell">{item.price} ₹</div>
-                  <div className="item-cell">
-                    <IonInput
-                      type="number"
-                      value={item.discount}
-                      onIonChange={(e) => {
-                        const newDiscount = Number(e.detail.value);
-                        setCartItems(prevItems =>
-                          prevItems.map((prevItem, i) =>
-                            i === index
-                              ? { ...prevItem, discount: newDiscount }
-                              : prevItem
-                          )
-                        );
-                      }}
-                    />
-                    <div>{applyDiscount(item.price, item.discount)} ₹</div>
-                  </div>
+                  <div className="item-cell">{item.discount}%</div>
                 </div>
               ))}
             </div>
           )}
-          <div className="total-row">
-            <IonLabel className="labelcls">Total:</IonLabel>
-            <IonText className="total-text">{finalTotalWithDiscount} ₹</IonText>
-          </div>
         </div>
-      </IonContent>
-      <IonFooter className="footercls">
-        <IonButton expand="full" onClick={handleSave}>Save</IonButton>
-        <IonButton expand="full" onClick={handlePrint}>Print</IonButton>
-        <IonButton expand="full" onClick={handleShare}>Share</IonButton>
-      </IonFooter>
 
-      <IonToast
-        isOpen={showToast}
-        onDidDismiss={() => setShowToast(false)}
-        message={toastMessage}
-        duration={2000}
-      />
+        <IonFooter>
+          <IonButton expand="full" onClick={handleSave}>
+            Save
+          </IonButton>
+          <IonButton expand="full" onClick={handlePrint}>
+            Print
+          </IonButton>
+          <IonButton expand="full" onClick={handleShare}>
+            Share
+          </IonButton>
+        </IonFooter>
+
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={2000}
+        />
+      </IonContent>
     </IonPage>
   );
 };

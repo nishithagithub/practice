@@ -36,7 +36,7 @@ const Home: React.FC = () => {
     <IonPage>
       <IonHeader className='pgcolor'>
         <div className="hd-button">
-          <IonButton shape="round" color="light" routerLink='/Login'>Login</IonButton>
+          <IonButton shape="round"  color = "light" routerLink='/Login'>Login</IonButton>
           <IonButton shape="round" color="light" routerLink='/SignUp'>SignUp</IonButton>
         </div>
       </IonHeader>
@@ -45,7 +45,7 @@ const Home: React.FC = () => {
           <IonRow className='custom-row'>
             <IonCol className="custom-col">
               <IonImg src="https://images.pexels.com/photos/593451/pexels-photo-593451.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" className="box-image" />
-              <IonButton className='full-link' onClick={() => handleNavigation("/add/medicines/${pharmacyName}")}>Add</IonButton>
+              <IonButton color="light" className='full-link' onClick={() => handleNavigation("/add/medicines/${pharmacyName}")}>Add</IonButton>
             </IonCol>
             <IonCol className="custom-col">
               <IonImg src="https://images.pexels.com/photos/593451/pexels-photo-593451.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" className="box-image" />

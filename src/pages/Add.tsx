@@ -10,7 +10,7 @@ const Add: React.FC = () => {
   
   const state = location.state as RouteState | undefined;
   const pharmacyName = state?.pharmacyName || '';
-  console.log(pharmacyName);
+ 
 
   const handleBackToHomePage = () => {
     history.push({
